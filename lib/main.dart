@@ -1,7 +1,17 @@
+import 'package:flame/flame.dart';
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sipa/screen/intro.dart';
+import 'package:sipa/sipa_game.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+  // await Flame.device.setPortrait();
+  // final game = SipaGame();
+  // runApp(GameWidget(game: game));
   runApp(const MyApp());
 }
 

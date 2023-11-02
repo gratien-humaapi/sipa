@@ -1,8 +1,12 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:sipa/components/card_back_sprite.dart';
 
-List cartes = [
+import '../pile.dart';
+import '../rank.dart';
+
+List<String> cartes = [
   "ca07.png",
   "ca08.png",
   "ca09.png",
@@ -51,11 +55,29 @@ List<Widget> userPlaceHolder = [];
 
 List<Widget> computerPlaceHolder = [];
 
+const emptyCard = SizedBox(
+  width: 55,
+  height: 75,
+);
+
 // ignore: must_be_immutable
 class Carte extends StatefulWidget {
-  final String card;
-  bool open;
-  Carte({Key? key, required this.card, required this.open}) : super(key: key);
+  bool canMove;
+  Carte(int value, String label, {super.key, this.canMove = false})
+      : rank = Rank.fromValueAndLabel(value, label);
+
+  final Rank rank;
+  Pile? pile;
+  bool _faceUp = false;
+  bool _isDragging = false;
+
+  bool get isFaceUp => _faceUp;
+  bool get isFaceDown => !_faceUp;
+  void flip() => _faceUp = !_faceUp;
+
+  factory Carte.empty() {
+    return Carte(0, '', canMove: false);
+  }
 
   @override
   State<Carte> createState() => _CarteState();
@@ -64,19 +86,40 @@ class Carte extends StatefulWidget {
 class _CarteState extends State<Carte> {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      child: Image.asset(
-        // "images/${widget.card}",
-        widget.open == false ? "images/dos-bleu.png" : "images/${widget.card}",
-        width: 55,
-        height: 75,
-        fit: BoxFit.contain,
+    final Widget render = widget.rank.label.isEmpty
+        ? const SizedBox(width: 55, height: 75)
+        : GestureDetector(
+            child: widget._faceUp ? widget.rank.sprite : cardBackSprite(),
+            onTap: () {
+              setState(() {
+                widget.flip();
+              });
+            },
+          );
+    return IgnorePointer(
+      ignoring: !widget.canMove,
+      child: Draggable(
+        data: widget.rank,
+        feedback: render,
+        childWhenDragging: const SizedBox(
+          width: 55,
+          height: 75,
+        ),
+        onDragStarted: () {
+          setState(() {
+            widget._isDragging = true;
+          });
+        },
+        onDragEnd: (event) {
+          if (!widget._isDragging) {
+            return;
+          }
+          setState(() {
+            widget._isDragging = false;
+          });
+        },
+        child: render,
       ),
-      onTap: () {
-        setState(() {
-          widget.open = true;
-        });
-      },
     );
   }
 }
@@ -87,65 +130,65 @@ int entierAleatoire(min, max) {
   return x;
 }
 
-getUserCards() {
-  userCards.clear();
-  userGiveCards.clear();
-  for (var i = 0; i < 5; i++) {
-    int index = entierAleatoire(0, playCards.length - 1);
-    userCards.add(playCards[index]);
-    playCards.removeAt(index);
-    print(playCards.length);
+// getUserCards() {
+//   userCards.clear();
+//   userGiveCards.clear();
+//   for (var i = 0; i < 5; i++) {
+//     int index = entierAleatoire(0, playCards.length - 1);
+//     userCards.add(playCards[index]);
+//     playCards.removeAt(index);
+//     print(playCards.length);
 
-    userGiveCards.add(
-      Draggable(
-        data: ["user", userCards[i], i, userCards[i].substring(0, 4)],
-        child: Carte(card: userCards[i], open: true),
-        feedback: Carte(card: userCards[i], open: true),
-        childWhenDragging: const SizedBox(
-          width: 55,
-          height: 75,
-        ),
-      ),
-    );
-    userPlaceHolder.add(
-      Carte(card: userCards[i], open: true),
-    );
-  }
-  print(userCards);
-}
+//     userGiveCards.add(
+//       Draggable(
+//         data: ["user", userCards[i], i, userCards[i].substring(0, 4)],
+//         feedback: Carte(card: userCards[i], open: true),
+//         childWhenDragging: const SizedBox(
+//           width: 55,
+//           height: 75,
+//         ),
+//         child: Carte(card: userCards[i], open: true),
+//       ),
+//     );
+//     userPlaceHolder.add(
+//       Carte(card: userCards[i], open: true),
+//     );
+//   }
+//   print(userCards);
+// }
 
-getComputerCards() {
-  computerCards.clear();
-  computerGiveCards.clear();
-  for (var i = 0; i < 5; i++) {
-    int index = entierAleatoire(0, playCards.length - 1);
-    computerCards.add(playCards[index]);
-    computer.add(playCards[index]);
-    playCards.removeAt(index);
-    print(playCards.length);
+// getComputerCards() {
+//   computerCards.clear();
+//   computerGiveCards.clear();
+//   for (var i = 0; i < 5; i++) {
+//     int index = entierAleatoire(0, playCards.length - 1);
+//     computerCards.add(playCards[index]);
+//     computer.add(playCards[index]);
+//     playCards.removeAt(index);
+//     print(playCards.length);
 
-    computerGiveCards.add(
-      Draggable(
-        data: [
-          "computer",
-          computerCards[i],
-          i,
-          computerCards[i].substring(0, 4)
-        ],
-        child: Carte(card: computerCards[i], open: false),
-        feedback: Carte(card: computerCards[i], open: false),
-        childWhenDragging: const SizedBox(
-          width: 55,
-          height: 75,
-        ),
-      ),
-    );
-    computerPlaceHolder.add(
-      Carte(card: computerCards[i], open: false),
-    );
-    showAllComputerCard.add(
-      Carte(card: computerCards[i], open: true),
-    );
-  }
-  print(computerCards);
-}
+//     computerGiveCards.add(
+//       Draggable(
+//         data: [
+//           "computer",
+//           computerCards[i],
+//           i,
+//           computerCards[i].substring(0, 4)
+//         ],
+//         feedback: Carte(card: computerCards[i], open: false),
+//         childWhenDragging: const SizedBox(
+//           width: 55,
+//           height: 75,
+//         ),
+//         child: Carte(card: computerCards[i], open: false),
+//       ),
+//     );
+//     computerPlaceHolder.add(
+//       Carte(card: computerCards[i], open: false),
+//     );
+//     showAllComputerCard.add(
+//       Carte(card: computerCards[i], open: true),
+//     );
+//   }
+//   print(computerCards);
+// }

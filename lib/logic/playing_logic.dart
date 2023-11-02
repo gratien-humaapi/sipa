@@ -88,7 +88,7 @@ Future askExit(BuildContext context) async => showDialog(
           ],
         ));
 
-showWinner(BuildContext context, winner, clean) => showDialog(
+showWinner(BuildContext context, winner) => showDialog(
     context: context,
     builder: (context) => Dialog(
           backgroundColor: Colors.transparent,
@@ -133,7 +133,7 @@ showWinner(BuildContext context, winner, clean) => showDialog(
                                   borderRadius: BorderRadius.circular(10.0)),
                             ),
                             onPressed: () {
-                              clean();
+                              // clean();
                               Navigator.pop(context);
                             },
                             child: const Text(
@@ -154,7 +154,7 @@ showWinner(BuildContext context, winner, clean) => showDialog(
           ),
         ));
 
-showRestart(BuildContext context, whoTakeIt, clean) => showDialog(
+showRestart(BuildContext context, whoTakeIt) => showDialog(
     context: context,
     builder: (context) => Dialog(
           backgroundColor: Colors.transparent,
@@ -193,7 +193,7 @@ showRestart(BuildContext context, whoTakeIt, clean) => showDialog(
                       onPressed: () {
                         playCards.clear();
                         playCards.addAll(cartes);
-                        clean();
+                        // clean();
                         Navigator.pop(context);
                       },
                       child: const Text(

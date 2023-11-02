@@ -39,6 +39,7 @@ dependencies:
   flutter_launcher_icons: ^0.12.0
   flutter_native_splash: ^2.2.19
   path_provider: ^2.0.8
+  flame: ^1.10.0
 
 
 flutter_icons:
@@ -80,8 +81,8 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - images/
     - assets/
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
@@ -97,27 +98,27 @@ flutter:
   fonts:
     - family: Joker
       fonts:
-        - asset: fonts/Joker-Smiling.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
+        - asset: assets/fonts/Joker-Smiling.ttf
+  #       - asset: assets/fonts/Schyler-Italic.ttf
   #         style: italic
     - family: Cardanaya
       fonts:
-        - asset: fonts/Cardanaya.ttf
+        - asset: assets/fonts/Cardanaya.ttf
     - family: Cardinal-Alt
       fonts:
-        - asset: fonts/Cardinal-Alternate.ttf
+        - asset: assets/fonts/Cardinal-Alternate.ttf
     - family: Cardinal
       fonts:
-        - asset: fonts/Cardinal.ttf
+        - asset: assets/fonts/Cardinal.ttf
     - family: CARDS
       fonts:
-        - asset: fonts/CARDS.ttf
+        - asset: assets/fonts/CARDS.ttf
     - family: Joker2
       fonts:
-        - asset: fonts/Joker.ttf
+        - asset: assets/fonts/Joker.ttf
   #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
+  #       - asset: assets/fonts/TrajanPro.ttf
+  #       - asset: assets/fonts/TrajanPro_Bold.ttf
   #         weight: 700
   #
   # For details regarding fonts from package dependencies,
