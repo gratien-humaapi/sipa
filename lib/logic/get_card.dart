@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:sipa/components/card_back_sprite.dart';
 
-import '../pile.dart';
 import '../rank.dart';
 
 List<String> cartes = [
@@ -61,74 +61,178 @@ const emptyCard = SizedBox(
 );
 
 // ignore: must_be_immutable
-class Carte extends StatefulWidget {
-  bool canMove;
-  Carte(int value, String label, {super.key, this.canMove = false})
-      : rank = Rank.fromValueAndLabel(value, label);
-
+class Carte extends HookWidget {
+  final bool canMove;
   final Rank rank;
-  Pile? pile;
-  bool _faceUp = false;
-  bool _isDragging = false;
+  bool faceUp;
+  AnimationController? animationController;
 
-  bool get isFaceUp => _faceUp;
-  bool get isFaceDown => !_faceUp;
-  void flip() => _faceUp = !_faceUp;
+  Carte(int value, String label,
+      {Key? key,
+      this.canMove = false,
+      this.faceUp = true,
+      this.animationController})
+      : rank = value == 0 ? Rank.empty() : Rank.fromValueAndLabel(value, label),
+        super(key: key);
 
   factory Carte.empty() {
     return Carte(0, '', canMove: false);
   }
 
-  @override
-  State<Carte> createState() => _CarteState();
-}
+  // void move() {
+  //   animationController.forward();
+  // }
 
-class _CarteState extends State<Carte> {
   @override
   Widget build(BuildContext context) {
-    final Widget render = widget.rank.label.isEmpty
+    final isFaceUp = useState<bool>(faceUp);
+    final isDragging = useState<bool>(false);
+
+    void flip() => isFaceUp.value = !isFaceUp.value;
+
+    animationController ??=
+        useAnimationController(duration: const Duration(milliseconds: 200));
+    // Utilisez le AnimationController passé en tant que paramètre
+    final animation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(0.0, 2.0),
+    ).animate(animationController!);
+
+    final Widget render = rank.value == 0
         ? const SizedBox(width: 55, height: 75)
         : GestureDetector(
-            child: widget._faceUp ? widget.rank.sprite : cardBackSprite(),
+            child: isFaceUp.value ? rank.sprite : cardBackSprite(),
             onTap: () {
-              setState(() {
-                widget.flip();
-              });
+              // flip();
+              animationController!.forward();
             },
           );
-    return IgnorePointer(
-      ignoring: !widget.canMove,
-      child: Draggable(
-        data: widget.rank,
-        feedback: render,
-        childWhenDragging: const SizedBox(
-          width: 55,
-          height: 75,
+
+    return SlideTransition(
+      position: animation,
+      child: IgnorePointer(
+        ignoring: !canMove,
+        child: Draggable(
+          data: rank,
+          feedback: render,
+          childWhenDragging: const SizedBox(
+            width: 55,
+            height: 75,
+          ),
+          onDragStarted: () {
+            isDragging.value = true;
+          },
+          onDragEnd: (details) {
+            if (!isDragging.value) return;
+            isDragging.value = false;
+          },
+          child: render,
         ),
-        onDragStarted: () {
-          setState(() {
-            widget._isDragging = true;
-          });
-        },
-        onDragEnd: (event) {
-          if (!widget._isDragging) {
-            return;
-          }
-          setState(() {
-            widget._isDragging = false;
-          });
-        },
-        child: render,
       ),
     );
   }
 }
+
+// class Carte extends StatefulWidget {
+//   bool canMove;
+//   Carte(int value, String label, {super.key, this.canMove = false})
+//       : rank = value == 0 ? Rank.empty() : Rank.fromValueAndLabel(value, label);
+
+//   final Rank rank;
+//   bool _faceUp = false;
+//   bool _isDragging = false;
+
+//   bool get isFaceUp => _faceUp;
+//   bool get isFaceDown => !_faceUp;
+//   void flip() => _faceUp = !_faceUp;
+
+//   factory Carte.empty() {
+//     return Carte(0, '', canMove: false);
+//   }
+
+//   @override
+//   State<Carte> createState() => _CarteState();
+// }
+
+// class _CarteState extends State<Carte> {
+//   @override
+//   Widget build(BuildContext context) {
+//     final Widget render = widget.rank.value == 0
+//         ? const SizedBox(width: 55, height: 75)
+//         : GestureDetector(
+//             child: widget._faceUp ? widget.rank.sprite : cardBackSprite(),
+//             onTap: () {
+//               setState(() {
+//                 widget.flip();
+//               });
+//             },
+//           );
+//     return IgnorePointer(
+//       ignoring: !widget.canMove,
+//       child: Draggable(
+//         data: widget.rank,
+//         feedback: render,
+//         childWhenDragging: const SizedBox(
+//           width: 55,
+//           height: 75,
+//         ),
+//         onDragStarted: () {
+//           setState(() {
+//             widget._isDragging = true;
+//           });
+//         },
+//         onDragEnd: (event) {
+//           if (!widget._isDragging) {
+//             return;
+//           }
+//           setState(() {
+//             widget._isDragging = false;
+//           });
+//         },
+//         child: render,
+//       ),
+//     );
+//   }
+// }
 
 int entierAleatoire(min, max) {
   var x = 0;
   x = ((Random().nextDouble() * (max - min + 1)) + min).floor();
   return x;
 }
+
+class MyPage extends HookWidget {
+  const MyPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Utilisation de useAnimationController pour créer et gérer l'AnimationController.
+    final AnimationController _controller = useAnimationController(
+      duration: Duration(seconds: 1),
+    );
+
+    // Démarrez l'animation lorsque le widget est construit.
+    useEffect(() {
+      _controller.forward();
+      return _controller
+          .dispose; // Dispose the controller when the widget is unmounted
+    }, const []); // Les crochets vides indiquent que l'effet ne dépend d'aucune variable et ne doit s'exécuter qu'une fois.
+
+    return Scaffold(
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.translate(
+            offset:
+                Offset(0, 100 * _controller.value), // Animation effectuée ici.
+            child: FlutterLogo(size: 100),
+          );
+        },
+      ),
+    );
+  }
+}
+
 
 // getUserCards() {
 //   userCards.clear();

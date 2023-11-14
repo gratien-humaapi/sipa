@@ -4,10 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:sipa/logic/get_card.dart';
 import 'package:sipa/logic/playing_logic.dart';
 import 'package:sipa/logic/score.dart';
-import 'package:sipa/logic/start_game.dart';
+import 'package:sipa/models/computer.dart';
 import 'package:sipa/models/player.dart';
 import 'package:sipa/rank.dart';
 import 'package:sipa/screen/get_pseudo.dart';
+
+void distributionOfCards(
+    {required Player player,
+    required Computer computer,
+    required TickerProvider vsync}) {
+// Creation des cartes
+  final cards = [
+    for (var rank = 7; rank <= 13; rank++)
+      for (var suit in ['s', 'h', 'c', 'd']) Rank.fromValueAndLabel(rank, suit),
+  ];
+// Melange des cartes
+  cards.shuffle();
+
+// Distribution des cartes player
+  for (var i = 0; i < 5; i++) {
+    player.acquireCard(cards.removeLast());
+  }
+// Distribution des cartes computer
+  for (var i = 0; i < 5; i++) {
+    computer.acquireComputerCard(
+        ComputerCard(rank: cards.removeLast(), vsync: vsync));
+  }
+}
 
 class Screen extends StatefulWidget {
   const Screen({Key? key}) : super(key: key);
@@ -16,23 +39,40 @@ class Screen extends StatefulWidget {
   _ScreenState createState() => _ScreenState();
 }
 
-class _ScreenState extends State<Screen> {
+class _ScreenState extends State<Screen> with TickerProviderStateMixin {
   int scorePlayer = 0;
   int scoreComputer = 0;
-  List<Widget> userPlayCards = [];
-  List<Widget> computerPlayCards = [];
+  List<Carte> userPlayCards = [];
+  List<Carte> computerPlayCards = [];
   List<String> userPlay = [];
-  List computerPlay = [];
+  List<String> computerPlay = [];
   bool sameColorCard = false;
 
   Rank? askedCard;
 
   String currentPlayer = '2';
 
-  List<Player> players = [
-    Player(name: "Computer", id: '1'),
-    Player(name: 'John', id: '2')
-  ];
+  Computer computer = Computer(name: "Computer", id: '1');
+  Player player = Player(name: 'John', id: '2');
+
+  void nextPlayer() {
+    if (currentPlayer == player.id) {
+      currentPlayer = computer.id;
+    } else {
+      currentPlayer = player.id;
+    }
+    setState(() {
+      //
+    });
+    // final int activePlayerIndex =
+    //     players.indexWhere((player) => player.id == currentPlayer);
+    // final int nextPlayerIndex =
+    //     activePlayerIndex == players.length - 1 ? 0 : activePlayerIndex + 1;
+    // setState(() {
+    //   currentPlayer = players[nextPlayerIndex].id;
+    // });
+    print('can play : $currentPlayer');
+  }
 
   // void clean() {
   //   computerPlay.clear();
@@ -64,95 +104,135 @@ class _ScreenState extends State<Screen> {
     // getUserCards();
     // getComputerCards();
     // sameColorCard = checkAllColor();
-    giveCards(players);
+    distributionOfCards(player: player, computer: computer, vsync: this);
     // clean();
     super.initState();
   }
 
-  // void cPlay() {
-  //   setState(
-  //     () {
-  //       int i = 8;
-  //       for (var item in computerCards) {
-  //         var a = item.substring(0, 2);
-  //         var b = userPlay[userPlay.length - 1].substring(0, 2);
-  //         print("$a $b");
-  //         a == b ? i = computerCards.indexOf(item) : null;
-  //         print(i);
-  //       }
-  //       i == 8 ? i = entierAleatoire(0, computerCards.length - 1) : null;
-  //       print(i);
-  //       computerPlay.add(computerCards[i]);
-  //       print(computer);
-  //       print(computer.indexOf(computerPlay[computerPlay.length - 1]));
-  //       computerPlaceHolder[computer
-  //           .indexOf(computerPlay[computerPlay.length - 1])] = const SizedBox(
-  //         width: 55,
-  //         height: 75,
-  //       );
-  //       computerCards.remove(computerCards[i]);
-  //       if (computerPlay.length == userPlay.length) {
-  //         bool check;
-  //         bool show = faceUpCard(userPlay[userPlay.length - 1],
-  //             computerPlay[computerPlay.length - 1]);
-  //         show
-  //             ? {
-  //                 check = checkmax(userPlay[userPlay.length - 1],
-  //                     computerPlay[computerPlay.length - 1]),
-  //                 check
-  //                     ? {
-  //                         computerPlayCards
-  //                             .add(Carte(card: computerPlay.last, open: true)),
-  //                         player = 1
-  //                       }
-  //                     : {
-  //                         computerPlayCards
-  //                             .add(Carte(card: computerPlay.last, open: true)),
-  //                         player = 2
-  //                       }
-  //               }
-  //             : {
-  //                 computerPlayCards.add(
-  //                   Carte(card: computerPlay.last, open: false),
-  //                 ),
-  //                 player = 1,
-  //               };
-  //       } else {
-  //         computerPlayCards.add(
-  //           Carte(card: computerPlay.last, open: true),
-  //         );
-  //         player = 1;
-  //       }
-  //     },
-  //   );
-  //   if (computerPlay.length == 5 && userPlay.length == 5) {
-  //     bool same = faceUpCard(userPlay.last, computerPlay.last);
-  //     bool max;
-  //     same
-  //         ? {
-  //             max = checkmax(userPlay.last, computerPlay.last),
-  //             max
-  //                 ? setState(() {
-  //                     dernier = 'user';
-  //                   })
-  //                 : setState(() {
-  //                     dernier = 'computer';
-  //                   }),
-  //           }
-  //         : setState(() {
-  //             dernier = 'user';
-  //           });
-  //     player = 0;
-  //     if (dernier == 'user') {
-  //       scorePlayer = scorePlayer + 1;
-  //     } else {
-  //       scoreComputer = scoreComputer + 1;
-  //     }
-  //     setState(() {});
-  //     Future.delayed(const Duration(milliseconds: 500))
-  //         .then((value) => showWinner(context, dernier, clean));
-  //   }
-  // }
+  void cPlay(Rank? currentCard) {
+    late ComputerCard answerCard;
+    final List<ComputerCard> computerHand = computer.cards;
+
+    if (currentCard == null) {
+      computerHand[entierAleatoire(0, computerHand.length - 1)]
+          .animationController
+          .forward();
+      // computerPlayCards.add(Carte(answerCard.value, answerCard.label));
+      // computer.removeCard(answerCard);
+      // askedCard = answerCard;
+      nextPlayer();
+      return;
+    }
+
+    //
+
+    List<Rank> sameCards = [];
+    List<int> sameCardIndexes = [];
+    for (int i = 0; i < computerHand.length; i++) {
+      if (computerHand[i].label == currentCard.label) {
+        // sameCards.add(item);
+        sameCardIndexes.add(i);
+      }
+      print(sameCards.length);
+    }
+
+    if (sameCards.isEmpty) {
+      // answerCard = computerHand[entierAleatoire(0, computerHand.length - 1)];
+      computer.cards[entierAleatoire(0, computerHand.length - 1)];
+    } else {
+      sameCards.shuffle();
+      answerCard = sameCards.first;
+    }
+
+    computerPlayCards.add(Carte(answerCard.value, answerCard.label));
+    computer.removeCard(answerCard);
+    askedCard = null;
+    if (currentCard.value > answerCard.value) {
+      nextPlayer();
+    }
+
+    // if (computerPlayCards.length == userPlayCards.length) {
+    //   bool check;
+    //   bool show = currentCard.label == computerPlayCards.last.rank.label;
+    //   if (show) {
+    //     check = computerPlayCards.last.rank.value > currentCard.value;
+    //     computerPlayCards
+    //         .add(Carte(computerCards[i].value, computerCards[i].label));
+    //     if (!check) {
+    //       nextPlayer();
+    //     }
+    //   } else {
+    //     computerPlayCards
+    //         .add(Carte(computerCards[i].value, computerCards[i].label));
+    //     nextPlayer();
+    //   }
+
+    //   // show
+    //   //     ? {
+    //   //         check = checkmax(userPlay[userPlay.length - 1],
+    //   //             computerPlay[computerPlay.length - 1]),
+    //   //         check
+    //   //             ? {computerPlayCards.add(computerCards[i]), player = 1}
+    //   //             : {computerPlayCards.add(computerCards[i]), player = 2}
+    //   //       }
+    //   //     : {
+    //   //         computerPlayCards.add(
+    //   //           Carte(card: computerPlay.last, open: false),
+    //   //         ),
+    //   //         player = 1,
+    //   //       };
+    // }
+
+    // else {
+    //   computerPlayCards.add(
+    //     computerPlay.last
+    //   );
+    //   player = 1;
+    // }
+
+    // if (computerPlay.length == 5 && userPlay.length == 5) {
+    //   bool same = faceUpCard(userPlay.last, computerPlay.last);
+    //   bool max;
+    //   same
+    //       ? {
+    //           max = checkmax(userPlay.last, computerPlay.last),
+    //           max
+    //               ? setState(() {
+    //                   dernier = 'user';
+    //                 })
+    //               : setState(() {
+    //                   dernier = 'computer';
+    //                 }),
+    //         }
+    //       : setState(() {
+    //           dernier = 'user';
+    //         });
+    //   player = 0;
+    //   if (dernier == 'user') {
+    //     scorePlayer = scorePlayer + 1;
+    //   } else {
+    //     scoreComputer = scoreComputer + 1;
+    //   }
+    //   setState(() {});
+    //   Future.delayed(const Duration(milliseconds: 500))
+    //       .then((value) => showWinner(context, dernier, clean));
+    // }
+  }
+
+  void compPlay() {
+    int i = 0;
+    // do {
+    //   cPlay(askedCard);
+    //   print('i = ${++i}');
+    // } while (currentPlayer == players[0].id);
+    // while (currentPlayer == players[0].id) {
+    cPlay(askedCard);
+    print('i = ${++i}');
+    // setState(() {
+    //  // Update all variables
+    // });
+    // }
+  }
 
   // void uPlay(List data) {
   //   setState(() {
@@ -203,6 +283,14 @@ class _ScreenState extends State<Screen> {
   //           };
   //   }
   // }
+
+  @override
+  void dispose() {
+    for (var obj in computer.cards) {
+      obj.animationController.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +361,7 @@ class _ScreenState extends State<Screen> {
                       Column(
                         children: [
                           Text(
-                            players[0].name,
+                            computer.name,
                             style: const TextStyle(
                               color: Colors.white,
                             ),
@@ -299,19 +387,18 @@ class _ScreenState extends State<Screen> {
                       const SizedBox(width: 10),
                       Row(
                         children: sameColorCard
-                            ? players[0].cards.map((e) {
-                                e.flip();
-                                return e;
+                            ? computer.cards.map((e) {
+                                return Carte(e.rank.value, e.rank.label,
+                                    canMove: currentPlayer == computer.id);
                               }).toList()
-                            :
-                            // players[0].cards.map((e) => e).toList(),
-                            players[0].cards.map((e) {
-                                e.canMove = currentPlayer == players[0].id;
-                                print('computer can move: ${e.canMove}');
-                                if (e.isFaceDown) {
-                                  e.flip();
-                                }
-                                return e;
+                            : computer.cards.map((e) {
+                                return Carte(
+                                    animationController: e.animationController,
+                                    e.rank.value,
+                                    e.rank.label,
+                                    faceUp:
+                                        true, // TODO To be changed to false //
+                                    canMove: currentPlayer == computer.id);
                               }).toList(),
                       )
                     ]),
@@ -359,13 +446,17 @@ class _ScreenState extends State<Screen> {
                                                 height: 75,
                                               )
                                             : Row(
-                                                children: computerPlayCards,
+                                                children: computerPlayCards
+                                                    .map((e) => e)
+                                                    .toList(),
                                               ),
                                         Padding(
                                           padding:
                                               const EdgeInsets.only(top: 60.0),
                                           child: Row(
-                                            children: userPlayCards,
+                                            children: userPlayCards
+                                                .map((e) => e)
+                                                .toList(),
                                           ),
                                         )
                                       ],
@@ -374,78 +465,58 @@ class _ScreenState extends State<Screen> {
                           );
                         },
                         onAccept: (Rank data) {
-                          // print({data.label, data.value});
-                          // if (askedCard == null) {
-                          //   askedCard = data;
-                          //   if (currentPlayer == players[1].id) {
-                          //     userPlayCards
-                          //         .add(Carte(data.value, data.label)..flip());
-                          //   } else {
-                          //     computerPlayCards
-                          //         .add(Carte(data.value, data.label));
-                          //   }
-                          //   setState(() {});
-                          // } else if (askedCard!.label == data.label) {
-                          //   if (currentPlayer == players[1].id) {
-                          //     askedCard = data;
-                          //     userPlayCards
-                          //         .add(Carte(data.value, data.label)..flip());
-                          //   } else {
-                          //     computerPlayCards
-                          //         .add(Carte(data.value, data.label)..flip());
-                          //   }
-                          //   setState(() {});
-                          // } else {
-                          //     if (currentPlayer == players[1].id) {
-                          //     askedCard = data;
-                          //     userPlayCards
-                          //         .add(Carte(data.value, data.label));
-                          //   } else {
-                          //     computerPlayCards
-                          //         .add(Carte(data.value, data.label));
-                          //   }
-                          //   setState(() {});
-                          // }
-
                           print({data.label, data.value});
 
                           void addCard(bool shouldFlip) {
                             final Carte addedCard =
                                 Carte(data.value, data.label);
-                            if (shouldFlip) {
-                              addedCard.flip();
-                            }
-                            if (currentPlayer == players[1].id) {
+                            addedCard.faceUp = shouldFlip;
+                            if (currentPlayer == player.id) {
                               userPlayCards.add(addedCard);
-                              players[1].removeCard(data);
+                              player.removeCard(data);
                             } else {
                               computerPlayCards.add(addedCard);
-                              players[0].removeCard(data);
+                              computer.removeComputerCard(data);
                             }
                           }
 
                           if (askedCard == null) {
                             askedCard = data;
                             addCard(true);
-                            currentPlayer =
-                                currentPlayer == '1' ? '2' : currentPlayer;
+                            nextPlayer();
                             print(currentPlayer);
-                          } else if (askedCard!.label == data.label) {
-                            if (askedCard!.value < data.value) {
-                              currentPlayer =
-                                  currentPlayer == '1' ? '2' : currentPlayer;
+                            if (currentPlayer == computer.id) {
+                              compPlay();
                             }
+                            return;
+                          }
+
+                          if (askedCard!.label != data.label) {
+                            askedCard = null;
+                            addCard(false);
+                            nextPlayer();
+                            print("currentPlayer $currentPlayer");
+                            compPlay();
+                            setState(() {
+                              // Update all variables
+                            });
+                            return;
+                          }
+
+                          if (askedCard!.label == data.label &&
+                              askedCard!.value < data.value) {
                             addCard(true);
                             askedCard = null;
+                            compPlay();
                           } else {
-                            addCard(false);
+                            addCard(true);
                             askedCard = null;
-                            currentPlayer =
-                                currentPlayer == '1' ? '2' : currentPlayer;
+                            nextPlayer();
+                            compPlay();
                           }
 
                           setState(() {
-                            print("object");
+                            // Update all variables
                           });
 
                           // if (data[0] == "user") {
@@ -517,7 +588,7 @@ class _ScreenState extends State<Screen> {
                         Column(
                           children: [
                             Text(
-                              players[1].name,
+                              player.name,
                               style: const TextStyle(
                                 color: Colors.white,
                               ),
@@ -543,19 +614,14 @@ class _ScreenState extends State<Screen> {
                         const SizedBox(width: 10),
                         sameColorCard
                             ? Row(
-                                children: players[1].cards.map((e) {
-                                if (e.isFaceDown) {
-                                  e.flip();
-                                }
-                                return e;
+                                children: player.cards.map((e) {
+                                return Carte(e.value, e.label,
+                                    canMove: currentPlayer == player.id);
                               }).toList())
                             : Row(
-                                children: players[1].cards.map((e) {
-                                  e.canMove = currentPlayer == players[1].id;
-                                  if (e.isFaceDown) {
-                                    e.flip();
-                                  }
-                                  return e;
+                                children: player.cards.map((e) {
+                                  return Carte(e.value, e.label,
+                                      canMove: currentPlayer == player.id);
                                 }).toList(),
                               ),
                       ]),

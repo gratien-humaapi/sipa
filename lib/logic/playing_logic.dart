@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:sipa/logic/get_card.dart';
 import 'package:sipa/logic/score.dart';
+import 'package:sipa/logic/start_game.dart';
 import 'package:sipa/screen/get_pseudo.dart';
 
 int player = 1;

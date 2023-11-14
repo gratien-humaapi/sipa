@@ -2,6 +2,7 @@ import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sipa/screen/game_screen.dart';
 import 'package:sipa/screen/intro.dart';
 import 'package:sipa/sipa_game.dart';
 
@@ -21,9 +22,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Sipa ♠️♣️🧡🔶',
-      debugShowCheckedModeBanner: false,
-      home: IntroPage(),
-    );
+        title: 'Sipa ♠️♣️🧡🔶',
+        debugShowCheckedModeBanner: false,
+        home: Screen()
+        // IntroPage(),
+        );
   }
 }
