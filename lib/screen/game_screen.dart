@@ -56,11 +56,7 @@ class _ScreenState extends State<Screen> with TickerProviderStateMixin {
   Player player = Player(name: 'John', id: '2');
 
   void nextPlayer() {
-    if (currentPlayer == player.id) {
-      currentPlayer = computer.id;
-    } else {
-      currentPlayer = player.id;
-    }
+    currentPlayer = (currentPlayer == player.id) ? computer.id : player.id;
     setState(() {
       //
     });
@@ -114,40 +110,39 @@ class _ScreenState extends State<Screen> with TickerProviderStateMixin {
     final List<ComputerCard> computerHand = computer.cards;
 
     if (currentCard == null) {
-      computerHand[entierAleatoire(0, computerHand.length - 1)]
-          .animationController
-          .forward();
-      // computerPlayCards.add(Carte(answerCard.value, answerCard.label));
-      // computer.removeCard(answerCard);
-      // askedCard = answerCard;
+      answerCard = computerHand[entierAleatoire(0, computerHand.length - 1)];
+      computerPlayCards
+          .add(Carte(answerCard.rank.value, answerCard.rank.label));
+      computer.removeComputerCard(answerCard.rank);
+      askedCard = answerCard.rank;
       nextPlayer();
       return;
     }
 
     //
-
     List<Rank> sameCards = [];
     List<int> sameCardIndexes = [];
     for (int i = 0; i < computerHand.length; i++) {
-      if (computerHand[i].label == currentCard.label) {
+      if (computerHand[i].rank.label == currentCard.label) {
         // sameCards.add(item);
         sameCardIndexes.add(i);
       }
-      print(sameCards.length);
+      print(sameCardIndexes.length);
     }
 
-    if (sameCards.isEmpty) {
-      // answerCard = computerHand[entierAleatoire(0, computerHand.length - 1)];
-      computer.cards[entierAleatoire(0, computerHand.length - 1)];
+    if (sameCardIndexes.isEmpty) {
+      answerCard = computerHand[entierAleatoire(0, computerHand.length - 1)];
+      nextPlayer();
+      return;
     } else {
-      sameCards.shuffle();
-      answerCard = sameCards.first;
+      sameCardIndexes.shuffle();
+      answerCard = computer.cards[sameCardIndexes.first];
     }
 
-    computerPlayCards.add(Carte(answerCard.value, answerCard.label));
-    computer.removeCard(answerCard);
+    computerPlayCards.add(Carte(answerCard.rank.value, answerCard.rank.label));
+    computer.removeComputerCard(answerCard.rank);
     askedCard = null;
-    if (currentCard.value > answerCard.value) {
+    if (currentCard.value > answerCard.rank.value) {
       nextPlayer();
     }
 
@@ -225,7 +220,7 @@ class _ScreenState extends State<Screen> with TickerProviderStateMixin {
     //   cPlay(askedCard);
     //   print('i = ${++i}');
     // } while (currentPlayer == players[0].id);
-    // while (currentPlayer == players[0].id) {
+    // while (currentPlayer == computer.id) {
     cPlay(askedCard);
     print('i = ${++i}');
     // setState(() {
